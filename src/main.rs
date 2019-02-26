@@ -4,18 +4,22 @@ fn main() {
     println!("Hello, world!");
 }
 
-struct Processor {
+struct Processor<R, W> {
     memory: Memory,
     pointer: usize,
     tokens: Vec<Token>,
+    reader: R,
+    writer: W,
 }
 
-impl Processor {
-    fn new(tokens: Vec<Token>) -> Processor {
+impl<R: Read, W: Write> Processor<R, W> {
+    fn new(tokens: Vec<Token>, reader: R, writer: W) -> Processor<R, W> {
         Processor{
             memory: Memory::new(),
             pointer: 0,
-            tokens
+            tokens,
+            reader,
+            writer
         }
     }
 
@@ -59,13 +63,13 @@ impl Processor {
 
     fn read(&mut self) {
         let mut buf = [0];
-        io::stdin().read(&mut buf).ok().expect("read error");
+        self.reader.read(&mut buf).ok().expect("read error");
         self.memory.set(buf[0]);
     }
 
     fn write(&mut self) {
         let buf = [self.memory.curr()];
-        io::stdout().write(&buf).ok().expect("write error");
+        self.writer.write(&buf).ok().expect("write error");
     }
 
     fn jump(&mut self) {
@@ -113,8 +117,11 @@ impl Processor {
 fn processor_test() {
     let code = ">+++++++++[<++++++++>-]<.>+++++++[<++++>-]<+.+++++++..+++.[-]>++++++++[<++++>-]<.>+++++++++++[<+++++>-]<.>++++++++[<+++>-]<.+++.------.--------.[-]>++++++++[<++++>-]<+.[-]++++++++++.";
     let tokens = Tokenizer::tokenize(code.to_string());
-    let mut processor = Processor::new(tokens);
+    let reader = "".as_bytes();
+    let writer = Vec::<u8>::new();
+    let mut processor = Processor::new(tokens, reader, writer);
     processor.process();
+    assert_eq!(String::from_utf8(processor.writer).unwrap(), "Hello World!\n");
 }
 
 struct Tokenizer {}
