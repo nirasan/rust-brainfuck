@@ -1,7 +1,16 @@
 use std::io::{self, Read, Write};
+use std::env;
 
+// Hello World!
+// cargo run ">+++++++++[<++++++++>-]<.>+++++++[<++++>-]<+.+++++++..+++.[-]>++++++++[<++++>-]<.>+++++++++++[<+++++>-]<.>++++++++[<+++>-]<.+++.------.--------.[-]>++++++++[<++++>-]<+.[-]++++++++++."
 fn main() {
-    println!("Hello, world!");
+    let args: Vec<String> = env::args().collect();
+    if args.len() < 2 {
+        panic!("Usage: cargo run BRAINFUCK_CODE")
+    }
+    let tokens = Tokenizer::tokenize(&args[1]);
+    let mut processor = Processor::new(tokens, io::stdin(), io::stdout());
+    processor.process();
 }
 
 struct Processor<R, W> {
@@ -116,7 +125,7 @@ impl<R: Read, W: Write> Processor<R, W> {
 #[test]
 fn processor_test() {
     let code = ">+++++++++[<++++++++>-]<.>+++++++[<++++>-]<+.+++++++..+++.[-]>++++++++[<++++>-]<.>+++++++++++[<+++++>-]<.>++++++++[<+++>-]<.+++.------.--------.[-]>++++++++[<++++>-]<+.[-]++++++++++.";
-    let tokens = Tokenizer::tokenize(code.to_string());
+    let tokens = Tokenizer::tokenize(&code.to_string());
     let reader = "".as_bytes();
     let writer = Vec::<u8>::new();
     let mut processor = Processor::new(tokens, reader, writer);
@@ -127,7 +136,7 @@ fn processor_test() {
 struct Tokenizer {}
 
 impl Tokenizer {
-    fn tokenize(input: String) -> Vec<Token> {
+    fn tokenize(input: &String) -> Vec<Token> {
         use Token::*;
         let mut tokens = Vec::<Token>::new();
         for c in input.chars() {
@@ -153,7 +162,7 @@ impl Tokenizer {
 #[test]
 fn tokenizer_test() {
     let input = "><+-.,[]".to_string();
-    let tokens = Tokenizer::tokenize(input);
+    let tokens = Tokenizer::tokenize(&input);
     assert_eq!(tokens.len(), 8);
     println!("{:?}", tokens)
 }
